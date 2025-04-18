@@ -3,6 +3,7 @@ const defaultSettings = {
   distance: 0.5,       // Default search radius in miles
   price: "2,3",        // Google Places API uses 1-4 ($ - $$$$)
   dietary: "",         // Empty means no filter (future: vegetarian, gluten-free, etc.)
+  rating: "0",         // Default no rating filter
 };
 // Convert miles to meters (Google Maps API uses meters)
 function milesToMeters(miles) {
@@ -32,6 +33,13 @@ async function fetchRestaurants() {
   
         const response = await fetch(url);
         const data = await response.json();
+
+        // 🔽 Filter by minimum rating
+        const minRating = parseFloat(settings.rating || "0");
+        if (minRating > 0) {
+          data.results = data.results.filter(place => (place.rating || 0) >= minRating);
+        }
+
   
         if (!data.results || data.results.length === 0) {
           console.error("❌ No restaurants found!");
@@ -109,7 +117,8 @@ async function fetchRestaurants() {
     // Store full restaurant details, including names and links
     restaurantDetails = selectedRestaurants.map((restaurant) => ({
       name: restaurant.name,
-      googleMapsLink: restaurant.googleMapsLink // Add the Google Maps link
+      googleMapsLink: restaurant.googleMapsLink, // Add the Google Maps link
+      // rating: restaurant.rating || "N/A",
     }));
   
     console.log("✅ Selected Restaurants for the Wheel:", restaurantDetails);
@@ -164,5 +173,16 @@ document.addEventListener("DOMContentLoaded", async () => {
       hideSettings();
       await fetchRestaurants(); // Fetch restaurants with the new settings
     });
+
+    const rating = document.getElementById("rating").value;
+    chrome.storage.sync.set({distance, price, rating}), async () => {
+      swal({ title: 'Settings saved!', icon: "success", button: false});
+      hideSettings();
+      await fetchRestaurants();
+    }
   });  
+
+  document.getElementById("rating").value = settings.rating;
+
+  
 });
