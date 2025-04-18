@@ -1,9 +1,10 @@
-const apiKey = "YOUR_API_KEY";
+const apiKey = "AIzaSyB2wNoLl1JAkDrfMil0YCCbEWFFXvL_bnM";
 const defaultSettings = {
   distance: 0.5,       // Default search radius in miles
   price: "2,3",        // Google Places API uses 1-4 ($ - $$$$)
   dietary: "",         // Empty means no filter (future: vegetarian, gluten-free, etc.)
   rating: "0",         // Default no rating filter
+  cuisine: "",         // Default no cuisine preference
 };
 // Convert miles to meters (Google Maps API uses meters)
 function milesToMeters(miles) {
@@ -29,7 +30,8 @@ async function fetchRestaurants() {
         const { latitude: lat, longitude: lng } = position.coords;
         const settings = await loadSettings();
   
-        const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${milesToMeters(settings.distance)}&type=restaurant&keyword=healthy&minprice=${settings.price[0]}&maxprice=${settings.price[2]}&key=${apiKey}`;
+        const keyword = `healthy ${settings.cuisine || ""}`.trim();
+        const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${milesToMeters(settings.distance)}&type=restaurant&keyword=${encodeURIComponent(keyword)}&minprice=${settings.price[0]}&maxprice=${settings.price[2]}&key=${apiKey}`;
   
         const response = await fetch(url);
         const data = await response.json();
@@ -160,29 +162,21 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("save-settings").addEventListener("click", async () => {
     const distance = parseFloat(document.getElementById("distance").value);
     const price = document.getElementById("price").value;
+    const rating = document.getElementById("rating").value;
+    const cuisine = document.getElementById("cuisine").value;
   
-    // Save the updated settings
-    chrome.storage.sync.set({ distance, price }, async () => {
+    chrome.storage.sync.set({ distance, price, rating, cuisine }, async () => {
       swal({
         title: `Settings saved!`,
         icon: "success",
-        button: false, // Hide the default OK button
+        button: false,
       });
   
-      // Hide the settings view and fetch new restaurants
-      hideSettings();
-      await fetchRestaurants(); // Fetch restaurants with the new settings
-    });
-
-    const rating = document.getElementById("rating").value;
-    chrome.storage.sync.set({distance, price, rating}), async () => {
-      swal({ title: 'Settings saved!', icon: "success", button: false});
       hideSettings();
       await fetchRestaurants();
-    }
+    });
   });  
 
-  document.getElementById("rating").value = settings.rating;
 
   
 });

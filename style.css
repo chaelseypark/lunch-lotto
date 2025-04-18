@@ -129,10 +129,9 @@ html, body {
 
 /* Align inputs and buttons */
 #settings-view .form-group {
-  margin-bottom: 10px;
+  margin-bottom: 5px auto 10px;
   text-align: center;
   width: 100%; /* Match the new container width */
-  margin: 0 auto 20px;
 }
 
 background-color:rgb(61, 69, 119);
